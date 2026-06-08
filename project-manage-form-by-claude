@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>專案管理看板</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #F7F6F3;
+  --bg2: #EDECEA;
+  --bg3: #E3E1DE;
+  --card: #FFFFFF;
+  --border: #DDD9D4;
+  --border2: #C8C3BC;
+  --text: #1C1B19;
+  --text2: #6B6760;
+  --text3: #9C9890;
+  --info-bg: #EAF2FD;
+  --info-border: #AACEF5;
+  --info-text: #185FA5;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font: 'Noto Sans TC', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+input, select, button { font-family: var(--font); outline: none; }
+input, select {
+  background: var(--card);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  color: var(--text);
+  font-size: 14px;
+}
+input:focus, select:focus { border-color: var(--info-text); box-shadow: 0 0 0 3px rgba(24,95,165,.1); }
+
+/* Layout */
+.app { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+.app-title { font-size: 22px; font-weight: 600; letter-spacing: -.3px; }
+.app-title span { color: var(--text2); font-weight: 400; font-size: 14px; margin-left: 8px; }
+
+/* Top bar */
+.topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.proj-sel { flex: 1; min-width: 160px; }
+
+/* Buttons */
+.btn { font-size: 13px; padding: 7px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--card); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: background .15s; }
+.btn:hover { background: var(--bg2); }
+.btn.primary { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+.btn.primary:hover { background: #D6E9FA; }
+.btn.danger { border-color: #F09595; color: #A32D2D; }
+.btn.danger:hover { background: #FCEBEB; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+.tab { padding: 9px 18px; font-size: 14px; color: var(--text2); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -0.5px; display: flex; align-items: center; gap: 7px; white-space: nowrap; transition: color .15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); font-weight: 500; border-bottom-color: var(--text); }
+.badge { font-size: 11px; background: var(--bg2); color: var(--text2); border-radius: 10px; padding: 1px 7px; }
+.tab.active .badge { background: var(--info-bg); color: var(--info-text); }
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Card */
+.card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+.slabel { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat .lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.stat .val { font-size: 26px; font-weight: 600; }
+
+/* Progress bar */
+.prog-bar { background: var(--bg2); border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 14px; }
+.prog-fill { height: 100%; background: #5DCAA5; border-radius: 8px; transition: width .4s ease; }
+
+/* Task / Todo items */
+.item-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 0.5px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; transition: background .12s; }
+.item-row:last-child { margin-bottom: 0; }
+.item-row:hover { background: var(--bg); }
+.sdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.item-name { flex: 1; font-size: 14px; }
+.item-meta { display: flex; align-items: center; gap: 7px; margin-left: auto; flex-shrink: 0; }
+.tag { font-size: 11px; padding: 2px 9px; border-radius: 10px; }
+.obadge { border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; width: 26px; height: 26px; font-size: 11px; flex-shrink: 0; }
+.ico-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 3px 5px; border-radius: 4px; display: inline-flex; align-items: center; transition: background .12s, color .12s; }
+.ico-btn:hover { color: #A32D2D; background: #FCEBEB; }
+
+/* Todo specific */
+.todo-cb { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: #5DCAA5; }
+.todo-done { text-decoration: line-through; color: var(--text3); }
+.todo-own { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.add-row { display: flex; gap: 8px; margin-top: 12px; }
+.add-row input { flex: 1; }
+.add-row select { width: 120px; }
+
+/* Gantt */
+.gantt-wrap { overflow-x: auto; }
+.gtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.gtable th { font-size: 12px; color: var(--text2); font-weight: 500; padding: 6px 8px; border-bottom: 0.5px solid var(--border); text-align: left; white-space: nowrap; }
+.gtable td { padding: 5px 8px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+.gtable tr:last-child td { border-bottom: none; }
+
+/* Owner cards */
+.owners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; }
+.owner-card { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; transition: box-shadow .15s; }
+.owner-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+.owner-card:hover .owner-del { opacity: 1; }
+.owner-top { display: flex; align-items: center; gap: 12px; }
+.oavatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.oname { font-size: 14px; font-weight: 500; }
+.orole { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.owner-footer { display: flex; align-items: center; justify-content: space-between; }
+.otasks-tag { font-size: 12px; color: var(--text2); background: var(--bg2); padding: 3px 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; }
+.owner-del { opacity: 0; transition: opacity .15s; font-size: 12px; padding: 4px 10px; border-radius: var(--radius-sm); border: 0.5px solid #F09595; background: none; color: #A32D2D; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.owner-del:hover { background: #FCEBEB; }
+
+/* Modal */
+.modal-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; align-items: flex-start; justify-content: center; padding-top: 80px; }
+.modal-ov.open { display: flex; }
+.modal { background: var(--card); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 20px; width: 340px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.modal h3 { font-size: 15px; font-weight: 600; }
+.modal input, .modal select { width: 100%; }
+.mrow { display: flex; gap: 8px; }
+.mrow input { flex: 1; }
+.mact { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+/* Confirm */
+.confirm-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; }
+.confirm-ov.open { display: flex; }
+.confirm-box { background: var(--card); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 22px; width: 300px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.12); }
+.confirm-box h3 { font-size: 15px; font-weight: 600; }
+.confirm-box p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.confirm-act { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Saved toast */
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1C1B19; color: #fff; font-size: 13px; padding: 10px 18px; border-radius: var(--radius-sm); opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; z-index: 999; display: flex; align-items: center; gap: 7px; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .owners-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="app-title">專案管理看板 <span>資料自動儲存於瀏覽器</span></div>
+  </div>
+
+  <div class="topbar">
+    <select class="proj-sel" id="proj-sel" onchange="switchProj(this.value)"></select>
+    <button class="btn primary" onclick="openModal('proj')"><i class="ti ti-plus"></i>新增專案</button>
+    <button class="btn danger" onclick="deleteProj()"><i class="ti ti-trash"></i>刪除專案</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')" id="tab-overview"><i class="ti ti-layout-dashboard"></i>總覽</button>
+    <button class="tab" onclick="switchTab('tasks')" id="tab-tasks"><i class="ti ti-checklist"></i>任務 <span class="badge" id="badge-tasks">0</span></button>
+    <button class="tab" onclick="switchTab('gantt')" id="tab-gantt"><i class="ti ti-chart-gantt"></i>甘特圖</button>
+    <button class="tab" onclick="switchTab('todos')" id="tab-todos"><i class="ti ti-circle-check"></i>待辦 <span class="badge" id="badge-todos">0</span></button>
+    <button class="tab" onclick="switchTab('owners')" id="tab-owners"><i class="ti ti-users"></i>負責人 <span class="badge" id="badge-owners">0</span></button>
+  </div>
+
+  <!-- Overview -->
+  <div class="panel active" id="panel-overview">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="card"><div class="slabel">任務進度</div><div id="overview-tasks"></div></div>
+    <div class="card"><div class="slabel">未完成待辦</div><div id="overview-todos"></div></div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="panel" id="panel-tasks">
+    <div class="card">
+      <div class="slabel">所有任務</div>
+      <div id="task-list"></div>
+      <div style="margin-top:12px"><button class="btn" onclick="openModal('task')"><i class="ti ti-plus"></i>新增任務</button></div>
+    </div>
+  </div>
+
+  <!-- Gantt -->
+  <div class="panel" id="panel-gantt">
+    <div class="card">
+      <div class="slabel">時間軸（週）</div>
+      <div class="gantt-wrap">
+        <table class="gtable">
+          <thead><tr>
+            <th style="min-width:130px">任務</th>
+            <th>負責人</th><th>狀態</th>
+            <th id="gantt-hdr" style="padding:0"></th>
+          </tr></thead>
+          <tbody id="gantt-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px"><button class="btn" onclick="openModal('task')"><i class="ti ti-plus"></i>新增任務</button></div>
+    </div>
+  </div>
+
+  <!-- Todos -->
+  <div class="panel" id="panel-todos">
+    <div class="card">
+      <div class="slabel">待辦清單</div>
+      <div id="todo-list"></div>
+      <div class="add-row">
+        <input type="text" id="todo-inp" placeholder="新增待辦事項…" onkeydown="if(event.key==='Enter')addTodo()">
+        <select id="todo-owner-sel"></select>
+        <button class="btn" onclick="addTodo()"><i class="ti ti-plus"></i>新增</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Owners -->
+  <div class="panel" id="panel-owners">
+    <div class="card">
+      <div class="slabel">團隊成員</div>
+      <div class="owners-grid" id="owners-grid"></div>
+      <div style="margin-top:14px"><button class="btn primary" onclick="openModal('owner')"><i class="ti ti-user-plus"></i>新增成員</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="confirm-ov" id="confirm-ov">
+  <div class="confirm-box">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-msg"></p>
+    <div class="confirm-act">
+      <button class="btn" onclick="closeConfirm()">取消</button>
+      <button class="btn danger" id="confirm-ok">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-ov" id="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="ti ti-device-floppy"></i>已自動儲存</div>
+
+<script>
+const OC=[['#B5D4F4','#0C447C'],['#9FE1CB','#085041'],['#F5C4B3','#993C1D'],['#F4C0D1','#993556'],['#C0DD97','#3B6D11'],['#FAC775','#854F0B'],['#CECBF6','#3C3489']];
+const LS_KEY='pm_data_v1';
+
+const DEFAULT={
+  owners:[{id:'o1',name:'王小明',role:'前端工程師'},{id:'o2',name:'林美華',role:'後端工程師'},{id:'o3',name:'陳志遠',role:'UI 設計師'}],
+  projects:[
+    {id:'p1',name:'網站重新設計',tasks:[
+      {id:'t1',name:'需求分析',owner:'o3',start:0,dur:4,status:'done'},
+      {id:'t2',name:'UI 原型設計',owner:'o3',start:3,dur:6,status:'progress'},
+      {id:'t3',name:'前端開發',owner:'o1',start:7,dur:8,status:'todo'},
+      {id:'t4',name:'後端 API',owner:'o2',start:7,dur:7,status:'todo'},
+    ],todos:[
+      {id:'td1',text:'確認設計稿規格',owner:'o3',done:true},
+      {id:'td2',text:'設定開發環境',owner:'o1',done:false},
+      {id:'td3',text:'撰寫 API 文件',owner:'o2',done:false},
+    ]},
+    {id:'p2',name:'行動 App 開發',tasks:[
+      {id:'t5',name:'市場調查',owner:'o3',start:0,dur:5,status:'done'},
+      {id:'t6',name:'設計系統',owner:'o3',start:4,dur:5,status:'progress'},
+      {id:'t7',name:'核心功能開發',owner:'o1',start:8,dur:10,status:'todo'},
+    ],todos:[
+      {id:'td4',text:'競品分析報告',owner:'o3',done:true},
+      {id:'td5',text:'建立元件庫',owner:'o1',done:false},
+    ]},
+  ],
+  currentProjectId:'p1'
+};
+
+let D = (() => { try { const s=localStorage.getItem(LS_KEY); return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT)); } catch(e){ return JSON.parse(JSON.stringify(DEFAULT)); }})();
+let modalType='', toastTimer=null;
+
+function save(){
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(D)); showToast(); }catch(e){}
+}
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function proj(){return D.projects.find(p=>p.id===D.currentProjectId)||D.projects[0]}
+function oById(id){return D.owners.find(o=>o.id===id)}
+function oColor(id){const i=D.owners.findIndex(o=>o.id===id);return OC[(i<0?0:i)%OC.length]}
+function ini(n){if(!n)return'?';return n.length>=2?n[0]+n[1]:n[0]}
+function sColor(s){return s==='done'?'#1D9E75':s==='progress'?'#378ADD':'#B4B2A9'}
+function sLabel(s){return s==='done'?'完成':s==='progress'?'進行中':'待辦'}
+function barCol(s){return s==='done'?'#5DCAA5':s==='progress'?'#85B7EB':'#D3D1C7'}
+function tagSt(s){if(s==='done')return'background:#E1F5EE;color:#0F6E56';if(s==='progress')return'background:#E6F1FB;color:#185FA5';return'background:#F1EFE8;color:#5F5E5A'}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function renderAll(){renderProjSel();renderBadges();renderOverview();renderTaskList();renderGantt();renderTodos();renderTodoOwnerSel();renderOwners();}
+
+function renderProjSel(){
+  document.getElementById('proj-sel').innerHTML=D.projects.map(p=>`<option value="${p.id}"${p.id===D.currentProjectId?' selected':''}>${p.name}</option>`).join('');
+}
+function renderBadges(){
+  const p=proj();
+  document.getElementById('badge-tasks').textContent=p.tasks.length;
+  document.getElementById('badge-todos').textContent=p.todos.filter(t=>!t.done).length;
+  document.getElementById('badge-owners').textContent=D.owners.length;
+}
+function renderOverview(){
+  const p=proj();
+  const total=p.tasks.length,done=p.tasks.filter(t=>t.status==='done').length,prog=p.tasks.filter(t=>t.status==='progress').length,pct=total?Math.round(done/total*100):0;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat"><div class="lbl">任務總數</div><div class="val">${total}</div></div>
+    <div class="stat"><div class="lbl">已完成</div><div class="val" style="color:#0F6E56">${done}</div></div>
+    <div class="stat"><div class="lbl">進行中</div><div class="val" style="color:#185FA5">${prog}</div></div>
+    <div class="stat"><div class="lbl">完成率</div><div class="val">${pct}%</div></div>`;
+  document.getElementById('overview-tasks').innerHTML=
+    `<div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>`+
+    (p.tasks.length?p.tasks.map(t=>{const ow=oById(t.owner);const oc=oColor(t.owner);return`<div class="item-row"><span class="sdot" style="background:${sColor(t.status)}"></span><span class="item-name">${t.name}</span><span class="tag" style="${tagSt(t.status)}">${sLabel(t.status)}</span><div class="obadge" style="background:${oc[0]};color:${oc[1]}" title="${ow?ow.name:''}">${ow?ini(ow.name):'?'}</div></div>`}).join(''):'<p style="font-size:13px;color:var(--text2)">尚無任務</p>');
+  const undone=p.todos.filter(t=>!t.done);
+  document.getElementById('overview-todos').innerHTML=undone.length
+    ?undone.map(td=>{const ow=oById(td.owner);return`<div class="item-row"><input type="checkbox" class="todo-cb" onchange="toggleTodo('${td.id}',this.checked)"><span class="item-name">${td.text}</span><span class="todo-own">${ow?ow.name:''}</span></div>`}).join('')
+    :'<p style="font-size:13px;color:var(--text2)">所有待辦事項已完成 🎉</p>';
+}
+function renderTaskList(){
+  document.getElementById('task-list').innerHTML=proj().tasks.length
+    ?proj().tasks.map(t=>{const ow=oById(t.owner);const oc=oColor(t.owner);return`<div class="item-row"><span class="sdot" style="background:${sColor(t.status)}"></span><span class="item-name">${t.name}</span><div class="item-meta"><span class="tag" style="${tagSt(t.status)}">${sLabel(t.status)}</span><div class="obadge" style="background:${oc[0]};color:${oc[1]}" title="${ow?ow.name:''}">${ow?ini(ow.name):'?'}</div><button class="ico-btn" onclick="deleteTask('${t.id}')"><i class="ti ti-trash"></i></button></div></div>`}).join('')
+    :'<p style="font-size:13px;color:var(--text2)">尚無任務，請新增</p>';
+}
+function renderGantt(){
+  const p=proj();
+  if(!p.tasks.length){document.getElementById('gantt-body').innerHTML='<tr><td colspan="4" style="padding:16px;font-size:13px;color:var(--text2)">尚無任務</td></tr>';return;}
+  const maxEnd=Math.max(...p.tasks.map(t=>t.start+t.dur),14);const cw=Math.max(20,Math.floor(540/(maxEnd+1)));
+  const hdr=document.getElementById('gantt-hdr');hdr.colSpan=maxEnd+1;
+  hdr.innerHTML=`<div style="display:flex">${Array.from({length:maxEnd+1},(_,i)=>`<div style="min-width:${cw}px;font-size:11px;color:var(--text2);padding:6px 0 6px 4px;border-left:0.5px solid var(--border)">W${i+1}</div>`).join('')}</div>`;
+  document.getElementById('gantt-body').innerHTML=p.tasks.map(t=>{
+    const ow=oById(t.owner);const oc=oColor(t.owner);const lft=t.start*cw,wid=t.dur*cw-4;
+    return`<tr>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td>
+      <td><div class="obadge" style="background:${oc[0]};color:${oc[1]}" title="${ow?ow.name:''}">${ow?ini(ow.name):'?'}</div></td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><span class="sdot" style="background:${sColor(t.status)}"></span>${sLabel(t.status)}</span></td>
+      <td style="padding:0" colspan="${maxEnd+1}"><div style="position:relative;height:28px;width:${(maxEnd+1)*cw}px">
+        ${Array.from({length:maxEnd+1},(_,i)=>`<div style="position:absolute;left:${i*cw}px;top:0;bottom:0;width:0.5px;background:var(--border)"></div>`).join('')}
+        <div style="position:absolute;top:50%;transform:translateY(-50%);left:${lft}px;width:${wid}px;height:16px;border-radius:8px;background:${barCol(t.status)}"></div>
+      </div></td></tr>`}).join('');
+}
+function renderTodos(){
+  document.getElementById('todo-list').innerHTML=proj().todos.length
+    ?proj().todos.map(td=>{const ow=oById(td.owner);return`<div class="item-row"><input type="checkbox" class="todo-cb" ${td.done?'checked':''} onchange="toggleTodo('${td.id}',this.checked)"><span class="item-name${td.done?' todo-done':''}">${td.text}</span><span class="todo-own">${ow?ow.name:''}</span><button class="ico-btn" onclick="deleteTodo('${td.id}')"><i class="ti ti-x"></i></button></div>`}).join('')
+    :'<p style="font-size:13px;color:var(--text2);padding:4px 0">尚無待辦事項</p>';
+  renderBadges();
+}
+function renderTodoOwnerSel(){
+  document.getElementById('todo-owner-sel').innerHTML=D.owners.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+}
+function renderOwners(){
+  document.getElementById('owners-grid').innerHTML=D.owners.map((o,i)=>{
+    const c=OC[i%OC.length];
+    const tc=D.projects.reduce((n,p)=>n+p.tasks.filter(t=>t.owner===o.id).length,0);
+    return`<div class="owner-card">
+      <div class="owner-top"><div class="oavatar" style="background:${c[0]};color:${c[1]}">${ini(o.name)}</div><div><div class="oname">${o.name}</div><div class="orole">${o.role||'—'}</div></div></div>
+      <div class="owner-footer"><span class="otasks-tag"><i class="ti ti-clipboard-list" style="font-size:12px"></i>${tc} 個任務</span><button class="owner-del" onclick="confirmDeleteOwner('${o.id}','${o.name}')"><i class="ti ti-trash" style="font-size:12px"></i>移除</button></div>
+    </div>`}).join('');
+  renderBadges();
+}
+
+function switchProj(id){D.currentProjectId=id;save();renderAll();}
+function deleteProj(){
+  if(D.projects.length<=1){alert('至少保留一個專案');return;}
+  if(!confirm('確定刪除此專案？'))return;
+  D.projects=D.projects.filter(p=>p.id!==D.currentProjectId);
+  D.currentProjectId=D.projects[0].id;save();renderAll();
+}
+function deleteTask(id){proj().tasks=proj().tasks.filter(t=>t.id!==id);save();renderAll();}
+function toggleTodo(id,done){const t=proj().todos.find(t=>t.id===id);if(t){t.done=done;save();renderAll();}}
+function deleteTodo(id){proj().todos=proj().todos.filter(t=>t.id!==id);save();renderTodos();renderOverview();}
+function addTodo(){
+  const inp=document.getElementById('todo-inp');const text=inp.value.trim();if(!text)return;
+  proj().todos.push({id:'td'+Date.now(),text,owner:document.getElementById('todo-owner-sel').value,done:false});
+  inp.value='';save();renderTodos();renderOverview();
+}
+function confirmDeleteOwner(id,name){
+  const tc=D.projects.reduce((n,p)=>n+p.tasks.filter(t=>t.owner===id).length,0);
+  document.getElementById('confirm-title').textContent='移除成員：'+name;
+  document.getElementById('confirm-msg').textContent=tc>0?`此成員目前負責 ${tc} 個任務，移除後相關任務將顯示為「未指派」。確定要移除嗎？`:'確定要移除此成員嗎？';
+  document.getElementById('confirm-ok').onclick=()=>{
+    D.projects.forEach(p=>p.tasks.forEach(t=>{if(t.owner===id)t.owner='';}));
+    D.owners=D.owners.filter(o=>o.id!==id);
+    closeConfirm();save();renderAll();
+  };
+  document.getElementById('confirm-ov').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirm-ov').classList.remove('open');}
+
+function openModal(type){
+  modalType=type;
+  const box=document.getElementById('modal-box');
+  if(type==='proj'){
+    box.innerHTML=`<h3>新增專案</h3><input type="text" id="m-pname" placeholder="專案名稱"><div class="mact"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="saveModal()">新增</button></div>`;
+  } else if(type==='task'){
+    const oo=D.owners.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+    box.innerHTML=`<h3>新增任務</h3><input type="text" id="m-tname" placeholder="任務名稱"><select id="m-town">${oo}</select><div class="mrow"><input type="number" id="m-tstart" placeholder="開始週" min="0" max="52" value="0"><input type="number" id="m-tdur" placeholder="持續週數" min="1" max="52" value="2"></div><select id="m-tstat"><option value="todo">待辦</option><option value="progress">進行中</option><option value="done">完成</option></select><div class="mact"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="saveModal()">新增</button></div>`;
+  } else if(type==='owner'){
+    box.innerHTML=`<h3>新增成員</h3><input type="text" id="m-oname" placeholder="姓名"><input type="text" id="m-orole" placeholder="職位（選填）"><div class="mact"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" onclick="saveModal()">新增</button></div>`;
+  }
+  document.getElementById('modal-ov').classList.add('open');
+  setTimeout(()=>{const f=document.querySelector('.modal input');if(f)f.focus();},50);
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+function saveModal(){
+  if(modalType==='proj'){
+    const name=document.getElementById('m-pname').value.trim();if(!name)return;
+    const id='p'+Date.now();D.projects.push({id,name,tasks:[],todos:[]});D.currentProjectId=id;
+  } else if(modalType==='task'){
+    const name=document.getElementById('m-tname').value.trim();if(!name)return;
+    proj().tasks.push({id:'t'+Date.now(),name,owner:document.getElementById('m-town').value,start:parseInt(document.getElementById('m-tstart').value)||0,dur:parseInt(document.getElementById('m-tdur').value)||2,status:document.getElementById('m-tstat').value});
+  } else if(modalType==='owner'){
+    const name=document.getElementById('m-oname').value.trim();if(!name)return;
+    D.owners.push({id:'o'+Date.now(),name,role:document.getElementById('m-orole').value.trim()});
+  }
+  closeModal();save();renderAll();
+}
+renderAll();
+</script>
+</body>
+</html>
